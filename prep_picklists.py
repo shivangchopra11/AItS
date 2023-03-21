@@ -61,7 +61,7 @@ def prep_negative_pick_dataset():
         # print(cur_negatives)
         if not os.path.exists('data/extracted_frames/picklist_'+str(cur_id)):
             continue
-        anchor_images = os.listdir('data/extracted_frames/picklist_'+str(cur_id))[:10]
+        anchor_images = os.listdir('data/extracted_frames/picklist_'+str(cur_id))[:20]
         # print(anchor_images)
         for anchor_img in anchor_images:
             anchor_img_name = anchor_img.split('.')[0]
@@ -74,7 +74,7 @@ def prep_negative_pick_dataset():
                         continue
                     neg_images = sorted(os.listdir('data/extracted_frames/picklist_'+str(neg_id)))
                     # print(len(neg_images))
-                    for neg_img in neg_images[:50]:
+                    for neg_img in neg_images[:20]:
                         anchors.append('data/extracted_frames/picklist_'+str(cur_id)+'/'+anchor_img)
                         positives.append('data/extracted_frames/picklist_'+str(cur_id)+'/'+next_anchor_img)
                         negatives.append('data/extracted_frames/picklist_'+str(neg_id)+'/'+neg_img)

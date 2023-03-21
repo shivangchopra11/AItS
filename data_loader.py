@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 import pandas as pd
 # import cv2
 from PIL import Image
-# from torchvision.io import read_image
+from torchvision.io import read_image
 
 
 class EgoObjectDataset(Dataset):
@@ -17,9 +17,9 @@ class EgoObjectDataset(Dataset):
         return self.data.shape[0]
 
     def __getitem__(self, idx):
-        anchor_image = Image.open(self.anchor_images[idx])
-        positive_image = Image.open(self.positive_images[idx])
-        negative_image = Image.open(self.negative_images[idx])
+        anchor_image = read_image(self.anchor_images[idx])
+        positive_image = read_image(self.positive_images[idx])
+        negative_image = read_image(self.negative_images[idx])
         
         anchor_image = self.transform(anchor_image)
         positive_image = self.transform(positive_image)

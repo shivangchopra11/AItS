@@ -1,5 +1,8 @@
+__pycache__
+
 data/elan_annotated
 data/Videos
 data/extracted_frames
 
 *.zip
+*.csv
