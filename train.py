@@ -148,11 +148,12 @@ def train():
             'model_architecture': model_architecture,
             'optimizer_model_state_dict': optimizer_model.state_dict(),
         }
-        torch.save(state, 'model_training_checkpoints/model_{}_triplet_epoch_{}.pt'.format(
-                model_architecture,
-                cur_epoch
+        if cur_epoch % 100 ==0:
+            torch.save(state, 'model_training_checkpoints/model_{}_triplet_epoch_{}.pt'.format(
+                    model_architecture,
+                    cur_epoch
+                )
             )
-        )
 
 if __name__=='__main__':
     train()
