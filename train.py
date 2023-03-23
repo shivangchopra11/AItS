@@ -53,9 +53,9 @@ def train():
         )
     ])
     learning_rate = 0.075
-    batch_size=64
+    batch_size=512
     dataset = EgoObjectDataset('data/final_dataset.csv', transform=image_transforms)
-    train_dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    train_dataloader = DataLoader(dataset, batch_size=batch_size)
     model_architecture = 'resnet18'
     model = get_model()
     print(model)
@@ -75,6 +75,8 @@ def train():
     criterion = TripletLoss
     total_epochs = 1000
     cur_epoch = 0
+    # print(len(train_dataloader))
+    # exit()
     while cur_epoch < total_epochs:
         time_now = time.time()
         total_loss = 0

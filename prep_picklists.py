@@ -30,7 +30,7 @@ def save_negative_picks():
         fin_list.append(cur_order)
 
     ids = df.values[:,0]
-    fin_list = np.array(fin_list)
+    fin_list = np.array(fin_list, dtype=object)
     all_negatives = []
     for pid, pick in zip(ids, fin_list):
         cur_negatives = []

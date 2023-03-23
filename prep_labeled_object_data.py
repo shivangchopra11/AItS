@@ -4,10 +4,41 @@ import os
 import cv2
 import mediapipe as mp
 import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
 
 mpHands = mp.solutions.hands
 hands = mpHands.Hands()
 mpDraw = mp.solutions.drawing_utils
+
+def get_list_colors():
+    df = pd.read_csv('data/video_items.csv')
+    # print(df.values)
+
+    picklist_label_dict = {}
+
+    lists = df.values[:,1]
+    ids = df.values[:,0]
+
+    fin_list = []
+    for pid,pick in zip(ids, lists):
+        # print(pick)
+        pick_len = len(pick)
+        # print(pick_len)
+        cur_order = []
+        for i in range(0,len(pick),2):
+            # print(pick[i])
+            # try:
+            cur_order.append(pick[i])
+            # except:
+            #     cur_order.append('')
+        # print(cur_order)
+        fin_list.append(cur_order)
+        picklist_label_dict[pid] = cur_order
+
+    ids = df.values[:,0]
+    fin_list = np.array(fin_list, dtype=object)
+    return picklist_label_dict
 
 def get_elan_boundaries(file_name):
     # Passing the path of the xml document to enable the parsing process
@@ -77,26 +108,28 @@ def get_hand_boundary(img):
   except:
     pass
 
-if __name__=='__main__':
+if __name__ == '__main__':
+    picklist_label_dict = get_list_colors()
+    print(picklist_label_dict)
+    picklists = []
+    frame_ids = []
+    labels = []
     elan_files = []
-    videos = sorted(os.listdir('data/Videos'))[-10:]
-    # print(videos[-10:])
-    # exit()
+    videos = sorted(os.listdir('data/Videos'))
     for fil in videos:
         # print(fil)
         fil_name = fil.split('.')[0]
-        if not os.path.exists('data/extracted_frames/'+fil_name):
-            os.makedirs('data/extracted_frames/'+fil_name)
-        else:
-            continue
+        
+        fil_id = int(fil_name[-3:])
+        # print(fil_id)
         elan_fil = 'data/elan_annotated/' + fil_name + '.eaf'
         boundaries = get_elan_boundaries(elan_fil)
         carry_times = boundaries['carry']
-        print(carry_times)
+        # print(carry_times)
         vid_fil = 'data/Videos/' + fil
         vidcap = cv2.VideoCapture(vid_fil)
         fps = vidcap.get(cv2.CAP_PROP_FPS)
-        print(fps)
+        # print(fps)
         success,image = vidcap.read()
         count = 0
         success = True
@@ -108,16 +141,28 @@ if __name__=='__main__':
             if time_idx >= len(carry_times)-1:
                 break
             if cur_time >= carry_times[time_idx] and cur_time <= carry_times[time_idx+1]:
-                hand = get_hand_boundary(frame)
-                if hand is not None:
-                    print(hand.shape)
-                    if hand.shape[0]>0 and hand.shape[1]>0:
-                        cv2.imwrite('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
-                        # plt.imsave('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
-                        print("time stamp current frame:",count/fps)
+                # hand = get_hand_boundary(frame)
+                # if hand is not None:
+                #     print(hand.shape)
+                # if hand.shape[0]>0 and hand.shape[1]>0:
+                cur_label = picklist_label_dict[fil_id][int(time_idx/2)]
+                print(fil_name, count, cur_label)
+                picklists.append(fil_name)
+                frame_ids.append(count)
+                labels.append(cur_label)
+                # cv2.imwrite('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
+                # plt.imsave('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
+                # print("time stamp current frame:",count/fps)
             elif cur_time > carry_times[time_idx+1]:
                 time_idx += 2
                 if time_idx > len(carry_times):
                     break
 
+    df = pd.DataFrame()
+    df['picklist'] = picklists
+    df['frame'] = frame_ids
+    df['label'] = labels
+    df.to_csv('data/labeled_objects.csv')
+
+        
 
