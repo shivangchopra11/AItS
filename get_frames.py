@@ -40,6 +40,24 @@ def get_elan_boundaries(file_name):
 
     return elan_boundaries
 
+def get_htk_boundaries(file_name):
+
+    htk_boundaries = defaultdict(list)
+    with open(file_name, 'r') as f:
+        lines = f.readlines()
+        for line in lines[2:]:
+            if line.strip() == ".":
+                # terminating char
+                break
+            boundaries = line.split()[0:2]
+            letter = line.split()[2]
+            letter_start = [int(boundary)/60000 for boundary in boundaries][0]
+            letter_end = [int(boundary)/60000 for boundary in boundaries][1]
+            htk_boundaries[letter].append(letter_start)
+            htk_boundaries[letter].append(letter_end)
+
+    return htk_boundaries
+
 def get_hand_boundary(img):
   results = hands.process(img)
   # print(results.multi_hand_landmarks)
@@ -79,19 +97,30 @@ def get_hand_boundary(img):
 
 if __name__=='__main__':
     elan_files = []
-    videos = sorted(os.listdir('data/Videos'))[-10:]
+    videos = sorted(os.listdir('data/Videos'))
     # print(videos[-10:])
     # exit()
     for fil in videos:
         # print(fil)
         fil_name = fil.split('.')[0]
-        if not os.path.exists('data/extracted_frames/'+fil_name):
-            os.makedirs('data/extracted_frames/'+fil_name)
+        pick_id = fil_name.split('_')[1]
+        # print(pick_id)
+        # exit()
+        htk_file = 'data/avgFoldNew/results-' + pick_id
+        if not os.path.exists(htk_file):
+            continue
+        if not os.path.exists('data/extracted_frames_new/'+fil_name):
+            os.makedirs('data/extracted_frames_new/'+fil_name)
         else:
             continue
-        elan_fil = 'data/elan_annotated/' + fil_name + '.eaf'
-        boundaries = get_elan_boundaries(elan_fil)
-        carry_times = boundaries['carry']
+        # elan_fil = 'data/elan_annotated/' + fil_name + '.eaf'
+        # boundaries = get_elan_boundaries(elan_fil)
+        print(pick_id)
+        boundaries = get_htk_boundaries(htk_file)
+        # print(boundaries)
+        # exit()
+        # carry_times = boundaries['carry']
+        carry_times = boundaries['e']
         print(carry_times)
         vid_fil = 'data/Videos/' + fil
         vidcap = cv2.VideoCapture(vid_fil)
@@ -112,7 +141,7 @@ if __name__=='__main__':
                 if hand is not None:
                     print(hand.shape)
                     if hand.shape[0]>0 and hand.shape[1]>0:
-                        cv2.imwrite('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
+                        cv2.imwrite('data/extracted_frames_new/'+fil_name+'/'+str(count)+'.png', hand)
                         # plt.imsave('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
                         print("time stamp current frame:",count/fps)
             elif cur_time > carry_times[time_idx+1]:
