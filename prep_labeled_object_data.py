@@ -40,6 +40,19 @@ def get_list_colors():
     fin_list = np.array(fin_list, dtype=object)
     return picklist_label_dict
 
+def get_list_colors_new():
+    picklist_label_dict = {}
+    pick_label_path = 'data/pick_labels/'
+    for fil in os.listdir(pick_label_path):
+        with open(pick_label_path+fil, 'r') as f:
+            data = f.read()
+            data = data.split(',')
+            pick_no = int(data[0])
+            pick_label = list(data[1].strip())
+            print(pick_no, pick_label)
+            picklist_label_dict[pick_no] = pick_label
+    return picklist_label_dict
+
 def get_elan_boundaries(file_name):
     # Passing the path of the xml document to enable the parsing process
     tree = ET.parse(file_name)
@@ -70,6 +83,24 @@ def get_elan_boundaries(file_name):
     elan_boundaries["carry_empty"] = elan_boundaries["carry_empty"][2:] if elan_boundaries["carry_empty"][0] == 0 else elan_boundaries["carry_empty"]
 
     return elan_boundaries
+
+def get_htk_boundaries(file_name):
+
+    htk_boundaries = defaultdict(list)
+    with open(file_name, 'r') as f:
+        lines = f.readlines()
+        for line in lines[2:]:
+            if line.strip() == ".":
+                # terminating char
+                break
+            boundaries = line.split()[0:2]
+            letter = line.split()[2]
+            letter_start = [int(boundary)/60000 for boundary in boundaries][0]
+            letter_end = [int(boundary)/60000 for boundary in boundaries][1]
+            htk_boundaries[letter].append(letter_start)
+            htk_boundaries[letter].append(letter_end)
+
+    return htk_boundaries
 
 def get_hand_boundary(img):
   results = hands.process(img)
@@ -109,7 +140,7 @@ def get_hand_boundary(img):
     pass
 
 if __name__ == '__main__':
-    picklist_label_dict = get_list_colors()
+    picklist_label_dict = get_list_colors_new()
     print(picklist_label_dict)
     picklists = []
     frame_ids = []
@@ -121,10 +152,21 @@ if __name__ == '__main__':
         fil_name = fil.split('.')[0]
         
         fil_id = int(fil_name[-3:])
+        pick_id = fil_name.split('_')[1]
         # print(fil_id)
-        elan_fil = 'data/elan_annotated/' + fil_name + '.eaf'
-        boundaries = get_elan_boundaries(elan_fil)
-        carry_times = boundaries['carry']
+        # elan_fil = 'data/elan_annotated/' + fil_name + '.eaf'
+        # boundaries = get_elan_boundaries(elan_fil)
+        # carry_times = boundaries['carry']
+        htk_file = 'data/avgFoldNew/results-' + pick_id
+        if not os.path.exists(htk_file):
+            os.makedirs(htk_file)
+        print(picklist_label_dict.keys())
+        if int(pick_id) not in picklist_label_dict.keys():
+            print('Not found:', pick_id)
+            # print(type(pick_id))
+            continue
+        boundaries = get_htk_boundaries(htk_file)
+        carry_times = boundaries['e']
         # print(carry_times)
         vid_fil = 'data/Videos/' + fil
         vidcap = cv2.VideoCapture(vid_fil)
@@ -141,28 +183,46 @@ if __name__ == '__main__':
             if time_idx >= len(carry_times)-1:
                 break
             if cur_time >= carry_times[time_idx] and cur_time <= carry_times[time_idx+1]:
-                # hand = get_hand_boundary(frame)
-                # if hand is not None:
-                #     print(hand.shape)
-                # if hand.shape[0]>0 and hand.shape[1]>0:
-                cur_label = picklist_label_dict[fil_id][int(time_idx/2)]
-                print(fil_name, count, cur_label)
-                picklists.append(fil_name)
-                frame_ids.append(count)
-                labels.append(cur_label)
-                # cv2.imwrite('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
-                # plt.imsave('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
-                # print("time stamp current frame:",count/fps)
+                hand = get_hand_boundary(frame)
+                if hand is not None:
+                    print(hand.shape)
+                    if hand.shape[0]>0 and hand.shape[1]>0:
+                        cur_label = picklist_label_dict[fil_id][int(time_idx/2)]
+                        print(fil_name, count, cur_label)
+                        picklists.append(fil_name)
+                        frame_ids.append(count)
+                        labels.append(cur_label)
+                        # cv2.imwrite('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
+                        # plt.imsave('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
+                        # print("time stamp current frame:",count/fps)
             elif cur_time > carry_times[time_idx+1]:
                 time_idx += 2
                 if time_idx > len(carry_times):
                     break
+        # while success:
+        #     success,frame = vidcap.read()
+        #     count+=1
+        #     cur_time = count/fps
+        #     if time_idx >= len(carry_times)-1:
+        #         break
+        #     if cur_time >= carry_times[time_idx] and cur_time <= carry_times[time_idx+1]:
+        #         hand = get_hand_boundary(frame)
+        #         if hand is not None:
+        #             print(hand.shape)
+        #             if hand.shape[0]>0 and hand.shape[1]>0:
+        #                 cv2.imwrite('data/extracted_frames_new/'+fil_name+'/'+str(count)+'.png', hand)
+        #                 # plt.imsave('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
+        #                 print("time stamp current frame:",count/fps)
+        #     elif cur_time > carry_times[time_idx+1]:
+        #         time_idx += 2
+        #         if time_idx > len(carry_times):
+        #             break
 
     df = pd.DataFrame()
     df['picklist'] = picklists
     df['frame'] = frame_ids
     df['label'] = labels
-    df.to_csv('data/labeled_objects.csv')
+    df.to_csv('data/labeled_objects_new.csv')
 
         
 
