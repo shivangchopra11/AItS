@@ -21,11 +21,11 @@ from torchvision import transforms
 np.random.seed(42)
 
 PICKLISTS = list(range(136, 235))
-htk_output_folder = 'data/htk_outputs'
+htk_output_folder = 'data/testFolds'
 htk_input_folder = 'data/htk_inputs'
 pick_label_folder = 'data/Labels'
 ckpt_path = 'model_training_checkpoints/model_resnet18_triplet_epoch_3.pt'
-img_base_pth = 'data/extracted_frames/'
+img_base_pth = 'data/extracted_frames_test/'
 
 # {picklist_no: [index in objects_avg_hsv_bins for objects that are in this picklist]}
 picklist_objects = collections.defaultdict(lambda: set())
@@ -87,7 +87,7 @@ def collapse_hue_bins(hue_bins, centers, sigma):
     return bin_sums
 
 def get_all_picklist_unique_objects():
-    df = pd.read_csv('data/labeled_objects.csv')
+    df = pd.read_csv('data/labeled_objects_test.csv')
     # df_new = pd.DataFrame()
     new_picks = []
     new_ids = []
@@ -95,7 +95,7 @@ def get_all_picklist_unique_objects():
     all_picklists = sorted(os.listdir('data/Videos'))
     for picklist in tqdm(all_picklists):
         pick_name = picklist.split('.')[0]
-        picklist_images = sorted(os.listdir('data/extracted_frames/'+pick_name))
+        picklist_images = sorted(os.listdir('data/extracted_frames_test/'+pick_name))
         cur_dict = {}
         # print(picklist_images)
         for pick_img in picklist_images:
@@ -114,7 +114,7 @@ def get_all_picklist_unique_objects():
     new_df['frame'] = new_ids
     new_df['label'] = new_labels
 
-    new_df.to_csv('data/small_labeled_objects.csv')
+    new_df.to_csv('data/labeled_objects_test.csv')
 
 def get_all_object_embeddings():
 
@@ -123,7 +123,7 @@ def get_all_object_embeddings():
     model.load_state_dict(torch.load(ckpt_path)['model_state_dict'])
     model.eval()
 
-    obj_data = pd.read_csv('data/small_labeled_objects.csv')
+    obj_data = pd.read_csv('data/labeled_objects_test.csv')
     print(obj_data.head())
     object_embeddings = []
     
@@ -404,7 +404,7 @@ def iterative_clustering():
 
     plt.xticks(rotation=90)
 
-    plt.savefig('results.png')
+    plt.savefig('results_triplet_test.png')
 
     plt.show()
 

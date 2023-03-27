@@ -31,7 +31,7 @@ class EgoObjectDataset(Dataset):
 
 
 class EgoObjectClassificationDataset(Dataset):
-    def __init__(self, dataset_path, transform):
+    def __init__(self, dataset_path, transform, test=False):
         self.data = pd.read_csv(dataset_path)
         def letter_to_name(val):
             dic = {
@@ -51,6 +51,7 @@ class EgoObjectClassificationDataset(Dataset):
         self.picklist = self.data['picklist'].values
         self.frames = self.data['frame'].values
         self.labels = self.data['label'].apply(letter_to_name).values
+        self.test = test
         # print(self.labels)
         # self.onehot_encoded_labels = self.onehot_encoder.fit_transform(self.labels)
         self.transform = transform
@@ -59,7 +60,10 @@ class EgoObjectClassificationDataset(Dataset):
         return self.data.shape[0]
 
     def __getitem__(self, idx):
-        image = read_image('data/extracted_frames_new/'+self.picklist[idx]+'/'+str(self.frames[idx])+'.png')
+        if self.test:
+            image = read_image('data/extracted_frames_test/'+self.picklist[idx]+'/'+str(self.frames[idx])+'.png')
+        else:
+            image = read_image('data/extracted_frames_new/'+self.picklist[idx]+'/'+str(self.frames[idx])+'.png')
         label = self.labels[idx]
         image = self.transform(image)
         return image, label

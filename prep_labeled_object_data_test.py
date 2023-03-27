@@ -140,14 +140,27 @@ def get_hand_boundary(img):
     pass
 
 if __name__ == '__main__':
-    picklist_label_dict = get_list_colors_new()
+    picklist_label_dict = get_list_colors()
     print(picklist_label_dict)
     picklists = []
     frame_ids = []
     labels = []
     elan_files = []
     videos = sorted(os.listdir('data/Videos'))
-    for fil in videos:
+    test_picklists = [
+        'picklist_138',
+        'picklist_201',
+        'picklist_185',
+        'picklist_153',
+        'picklist_181',
+        'picklist_199',
+        'picklist_214',
+        'picklist_188',
+        'picklist_227',
+        'picklist_215',
+    ]
+    for fil in test_picklists:
+        fil = fil + '.mp4'
         # print(fil)
         fil_name = fil.split('.')[0]
         
@@ -157,7 +170,7 @@ if __name__ == '__main__':
         # elan_fil = 'data/elan_annotated/' + fil_name + '.eaf'
         # boundaries = get_elan_boundaries(elan_fil)
         # carry_times = boundaries['carry']
-        htk_file = 'data/avgFoldNew/results-' + pick_id
+        htk_file = 'data/testFolds/results-' + pick_id
         if not os.path.exists(htk_file):
             os.makedirs(htk_file)
         print(picklist_label_dict.keys())
@@ -165,8 +178,8 @@ if __name__ == '__main__':
             print('Not found:', pick_id)
             # print(type(pick_id))
             continue
-        if not os.path.exists('data/extracted_frames_new/'+fil_name):
-            os.makedirs('data/extracted_frames_new/'+fil_name)
+        if not os.path.exists('data/extracted_frames_test/'+fil_name):
+            os.makedirs('data/extracted_frames_test/'+fil_name)
         boundaries = get_htk_boundaries(htk_file)
         carry_times = boundaries['e']
         # print(carry_times)
@@ -194,7 +207,7 @@ if __name__ == '__main__':
                         picklists.append(fil_name)
                         frame_ids.append(count)
                         labels.append(cur_label)
-                        cv2.imwrite('data/extracted_frames_new/'+fil_name+'/'+str(count)+'.png', hand)
+                        cv2.imwrite('data/extracted_frames_test/'+fil_name+'/'+str(count)+'.png', hand)
                         # plt.imsave('data/extracted_frames/'+fil_name+'/'+str(count)+'.png', hand)
                         print("time stamp current frame:",count/fps)
             elif cur_time > carry_times[time_idx+1]:
@@ -224,7 +237,7 @@ if __name__ == '__main__':
     df['picklist'] = picklists
     df['frame'] = frame_ids
     df['label'] = labels
-    df.to_csv('data/labeled_objects_new.csv')
+    df.to_csv('data/labeled_objects_test.csv')
 
         
 
